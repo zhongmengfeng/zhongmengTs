@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 
 import org.tensorflow.demo.env.BorderedText;
+import org.tensorflow.demo.env.DensityUtil;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 import org.tensorflow.demo.utils.Classifier;
@@ -132,7 +133,7 @@ public class MultiBoxTracker {
 
     for (final Pair<Float, RectF> detection : screenRects) {
       final RectF rect = detection.second;
-      canvas.drawRect(rect, boxPaint);
+//      canvas.drawRect(rect, boxPaint);
       canvas.drawText("" + detection.first, rect.left, rect.top, textPaint);
       borderedText.drawText(canvas, rect.centerX(), rect.centerY(), "" + detection.first);
     }
@@ -159,7 +160,6 @@ public class MultiBoxTracker {
 
   public synchronized void trackResults(
           final List<Classifier.Recognition> results, final byte[] frame, final long timestamp) {
-    logger.i("Processing %d results from %d", results.size(), timestamp);
     processResults(timestamp, results, frame);
   }
 
@@ -186,13 +186,24 @@ public class MultiBoxTracker {
       boxPaint.setColor(recognition.color);
 
       final float cornerSize = Math.min(trackedPos.width(), trackedPos.height()) / 8.0f;
-      canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
+//      canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
 
       final String labelString =
           !TextUtils.isEmpty(recognition.title)
               ? String.format("%s %.2f", recognition.title, recognition.detectionConfidence)
               : String.format("%.2f", recognition.detectionConfidence);
-      borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom, labelString);
+        double dx = trackedPos.right - trackedPos.left;
+        double x1left = (dx - DensityUtil.dp2px(context, 100)) / 2 + trackedPos.left;
+        double dy = -trackedPos.top + trackedPos.bottom;
+        double y1Top = (dy - DensityUtil.dp2px(context, 40)) / 2 + trackedPos.top;
+
+        double x2Right = x1left + DensityUtil.dp2px(context, 100);
+        double y2bottom = y1Top + DensityUtil.dp2px(context, 40);
+
+        RectF rectF = new RectF((float) x1left, (float) y1Top, (float) x2Right, (float) y2bottom);
+
+        borderedText.drawText2(rectF, canvas, (float) x1left , (float) y1Top , labelString);
+//      borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom, labelString);
     }
   }
 
@@ -208,7 +219,6 @@ public class MultiBoxTracker {
     if (objectTracker == null && !initialized) {
       objectTracker.clearInstance();
 
-      logger.i("Initializing ObjectTracker: %dx%d", w, h);
       objectTracker = objectTracker.getInstance(w, h, rowStride, true);
       frameWidth = w;
       frameHeight = h;
@@ -216,11 +226,7 @@ public class MultiBoxTracker {
       initialized = true;
 
       if (objectTracker == null) {
-        String message =
-            "Object tracking support not found. "
-                + "See tensorflow/examples/android/README.md for details.";
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-        logger.e(message);
+
       }
     }
 
@@ -237,7 +243,6 @@ public class MultiBoxTracker {
       final ObjectTracker.TrackedObject trackedObject = recognition.trackedObject;
       final float correlation = trackedObject.getCurrentCorrelation();
       if (correlation < MIN_CORRELATION) {
-        logger.v("Removing tracked object %s because NCC is %.2f", trackedObject, correlation);
         trackedObject.stopTracking();
         trackedObjects.remove(recognition);
 
@@ -262,13 +267,9 @@ public class MultiBoxTracker {
       final RectF detectionScreenRect = new RectF();
       rgbFrameToScreen.mapRect(detectionScreenRect, detectionFrameRect);
 
-      logger.v(
-          "Result! Frame: " + result.getLocation() + " mapped to screen:" + detectionScreenRect);
-
       screenRects.add(new Pair<Float, RectF>(result.getConfidence(), detectionScreenRect));
 
       if (detectionFrameRect.width() < MIN_SIZE || detectionFrameRect.height() < MIN_SIZE) {
-        logger.w("Degenerate rectangle! " + detectionFrameRect);
         continue;
       }
 
@@ -276,7 +277,6 @@ public class MultiBoxTracker {
     }
 
     if (rectsToTrack.isEmpty()) {
-      logger.v("Nothing to track, aborting.");
       return;
     }
 

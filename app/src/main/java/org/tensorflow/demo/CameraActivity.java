@@ -117,7 +117,6 @@ public abstract class CameraActivity extends Activity
   @Override
   public void onPreviewFrame(final byte[] bytes, final Camera camera) {
     if (isProcessingFrame) {
-      LOGGER.w("Dropping frame!");
       return;
     }
 
@@ -131,7 +130,6 @@ public abstract class CameraActivity extends Activity
         onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 0);
       }
     } catch (final Exception e) {
-      LOGGER.e(e, "Exception!");
       return;
     }
 
@@ -227,13 +225,11 @@ public abstract class CameraActivity extends Activity
 
   @Override
   public synchronized void onStart() {
-    LOGGER.d("onStart " + this);
     super.onStart();
   }
 
   @Override
   public synchronized void onResume() {
-    LOGGER.d("onResume " + this);
     super.onResume();
 
     handlerThread = new HandlerThread("inference");
@@ -243,10 +239,8 @@ public abstract class CameraActivity extends Activity
 
   @Override
   public synchronized void onPause() {
-    LOGGER.d("onPause " + this);
 
     if (!isFinishing()) {
-      LOGGER.d("Requesting finish");
       finish();
     }
 
@@ -264,13 +258,11 @@ public abstract class CameraActivity extends Activity
 
   @Override
   public synchronized void onStop() {
-    LOGGER.d("onStop " + this);
     super.onStop();
   }
 
   @Override
   public synchronized void onDestroy() {
-    LOGGER.d("onDestroy " + this);
     super.onDestroy();
   }
 
@@ -307,8 +299,6 @@ public abstract class CameraActivity extends Activity
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA) ||
           shouldShowRequestPermissionRationale(PERMISSION_STORAGE)) {
-        Toast.makeText(CameraActivity.this,
-            "Camera AND storage permission are required for this demo", Toast.LENGTH_LONG).show();
       }
       requestPermissions(new String[] {PERMISSION_CAMERA, PERMISSION_STORAGE}, PERMISSIONS_REQUEST);
     }
@@ -351,11 +341,10 @@ public abstract class CameraActivity extends Activity
         useCamera2API = (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
             || isHardwareLevelSupported(characteristics, 
                                         CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
-        LOGGER.i("Camera API lv2?: %s", useCamera2API);
         return cameraId;
       }
     } catch (CameraAccessException e) {
-      LOGGER.e(e, "Not allowed to access camera");
+
     }
 
     return null;
@@ -364,7 +353,6 @@ public abstract class CameraActivity extends Activity
   protected void setFragment() {
     String cameraId = chooseCamera();
     if (cameraId == null) {
-      Toast.makeText(this, "No Camera Detected", Toast.LENGTH_SHORT).show();
       finish();
     }
 
@@ -403,7 +391,6 @@ public abstract class CameraActivity extends Activity
     for (int i = 0; i < planes.length; ++i) {
       final ByteBuffer buffer = planes[i].getBuffer();
       if (yuvBytes[i] == null) {
-        LOGGER.d("Initializing buffer %d at size %d", i, buffer.capacity());
         yuvBytes[i] = new byte[buffer.capacity()];
       }
       buffer.get(yuvBytes[i]);

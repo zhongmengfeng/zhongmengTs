@@ -20,7 +20,9 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
+import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 
 import java.util.Vector;
@@ -30,7 +32,7 @@ import java.util.Vector;
  */
 public class BorderedText {
   private final Paint interiorPaint;
-  private final Paint exteriorPaint;
+  private final Paint exPaint,exteriorPaint;
 
   private final float textSize;
 
@@ -68,23 +70,38 @@ public class BorderedText {
     exteriorPaint.setAntiAlias(false);
     exteriorPaint.setAlpha(255);
 
+    exPaint = new Paint();
+    exPaint.setTextSize(textSize);
+    exPaint.setColor(Color.BLACK);
+    exPaint.setStyle(Style.STROKE);
+    exPaint.setAntiAlias(true);
+    exPaint.setAlpha(255);
+
     this.textSize = textSize;
   }
 
   public void setTypeface(Typeface typeface) {
     interiorPaint.setTypeface(typeface);
     exteriorPaint.setTypeface(typeface);
+    exPaint.setTypeface(typeface);
   }
 
   public void drawText(final Canvas canvas, final float posX, final float posY, final String text) {
-    canvas.drawText(text, posX, posY, exteriorPaint);
+//    canvas.drawText(text, posX, posY, exteriorPaint);
+//    canvas.drawText(text, posX, posY, interiorPaint);
+  }
+
+
+  public void drawText2(  RectF rectF, final Canvas canvas, final float posX, final float posY, final String text) {
+    RectF left = new RectF(rectF.left,rectF.top,rectF.right,rectF.bottom);
+    canvas.drawRoundRect(left,20,20,exPaint);
     canvas.drawText(text, posX, posY, interiorPaint);
   }
 
   public void drawLines(Canvas canvas, final float posX, final float posY, Vector<String> lines) {
     int lineNum = 0;
     for (final String line : lines) {
-      drawText(canvas, posX, posY - getTextSize() * (lines.size() - lineNum - 1), line);
+//      drawText(canvas, posX, posY - getTextSize() * (lines.size() - lineNum - 1), line);
       ++lineNum;
     }
   }
